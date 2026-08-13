@@ -13,45 +13,39 @@ const upload = multer({
 });
 
 
-// ============================================================
-// AUTH
-// ============================================================
+router.post("/register",userController.register);
 
-router.post(
-  "/register",
-  userController.register
+router.post("/login",userController.login);
+
+router.post("/refresh-token",userController.refreshToken);
+
+router.get("/profile",userController.profile);
+
+router.post("/change-password",userController.changePassword);
+
+router.post("/bulk-upload",upload.single("file"),userController.bulkUpload);
+
+router.get("/", userController.getAllUsers
 );
 
-router.post(
-  "/login",
-  userController.login
+router.get("/firms",userController.getAllFirms
 );
 
-router.post(
-  "/refresh-token",
-  userController.refreshToken
+router.get("/:id",userController.getUser
 );
 
 router.get(
-  "/profile",
-  userController.profile
+  "/firm/:id",
+  userController.getFirm
 );
 
 router.post(
-  "/change-password",
-  userController.changePassword
+  "/:userId/firms",
+  userController.addFirmToUser
 );
 
-
-// ============================================================
-// BULK UPLOAD
-// ============================================================
-
-router.post(
-  "/bulk-upload",
-  upload.single("file"),
-  userController.bulkUpload
+router.delete(
+  "/:userId/firms/:firmId",
+  userController.removeFirmFromUser
 );
-
-
 module.exports = router;

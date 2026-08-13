@@ -10,16 +10,7 @@ const {
   verifyRefreshToken,
 } = require("../helpers/jwt.helper");
 
-/*
-|--------------------------------------------------------------------------
-| Generate Default Password
-|--------------------------------------------------------------------------
-| Mrs. Manjubala Kashyap -> Manjubala@123
-| Mr Narendra Kashyap     -> Narendra@123
-| Mr Tarun Kashyap        -> Tarun@123
-| Mr Satyanarayan Sarda  -> Satyanarayan@123
-|--------------------------------------------------------------------------
-*/
+
 const generatePassword = (name) => {
   if (!name) return null;
 
@@ -32,11 +23,6 @@ const generatePassword = (name) => {
   return `${firstName}@123`;
 };
 
-/*
-|--------------------------------------------------------------------------
-| Clean N/A / Empty Values
-|--------------------------------------------------------------------------
-*/
 const cleanValue = (value) => {
   if (
     value === undefined ||
@@ -50,11 +36,7 @@ const cleanValue = (value) => {
   return String(value).trim();
 };
 
-/*
-|--------------------------------------------------------------------------
-| Normalize JSON ID Array
-|--------------------------------------------------------------------------
-*/
+
 const normalizeIds = (ids) => {
   if (!Array.isArray(ids)) {
     return [];
@@ -65,11 +47,6 @@ const normalizeIds = (ids) => {
     .filter((id) => !isNaN(id));
 };
 
-/*
-|--------------------------------------------------------------------------
-| Add ID To Array
-|--------------------------------------------------------------------------
-*/
 const addUniqueId = (ids, id) => {
   const normalizedIds = normalizeIds(ids);
   const numericId = Number(id);
@@ -81,11 +58,7 @@ const addUniqueId = (ids, id) => {
   return normalizedIds;
 };
 
-/*
-|--------------------------------------------------------------------------
-| Remove ID From Array
-|--------------------------------------------------------------------------
-*/
+
 const removeId = (ids, id) => {
   const normalizedIds = normalizeIds(ids);
   const numericId = Number(id);
@@ -95,11 +68,7 @@ const removeId = (ids, id) => {
   );
 };
 
-/*
-|--------------------------------------------------------------------------
-| Find Existing Firm Or Create New Firm
-|--------------------------------------------------------------------------
-*/
+
 const getOrCreateFirm = async (
   firmName,
   firmAddress = null
@@ -125,11 +94,7 @@ const getOrCreateFirm = async (
       user_ids: [],
     });
   } else {
-    /*
-    |--------------------------------------------------------------------------
-    | Update address if existing firm doesn't have address
-    |--------------------------------------------------------------------------
-    */
+    
     if (
       !firm.firmAddress &&
       cleanValue(firmAddress)
@@ -145,30 +110,7 @@ const getOrCreateFirm = async (
 };
 
 module.exports = {
-  /*
-  |--------------------------------------------------------------------------
-  | REGISTER USER
-  |--------------------------------------------------------------------------
-  |
-  | Request:
-  |
-  | {
-  |   "name": "Mr Narendra Kashyap",
-  |   "email": "N/A",
-  |   "dob": "21/09/1960",
-  |   "image": "",
-  |   "bloodGroup": "B-",
-  |   "mobile": "9424860299",
-  |   "firms": [
-  |      {
-  |        "firmName": "Tarun Fabrics",
-  |        "firmAddress": "133-134 M.T. Cloth Market"
-  |      }
-  |   ]
-  | }
-  |
-  |--------------------------------------------------------------------------
-  */
+  
   register: async (req, res, next) => {
     try {
       const {
@@ -182,11 +124,7 @@ module.exports = {
         role,
       } = req.body;
 
-      /*
-      |--------------------------------------------------------------------------
-      | Validation
-      |--------------------------------------------------------------------------
-      */
+      
       if (!name) {
         throw createError.BadRequest(
           "Name is required"
@@ -370,20 +308,6 @@ module.exports = {
     }
   },
 
-  /*
-  |--------------------------------------------------------------------------
-  | LOGIN
-  |--------------------------------------------------------------------------
-  |
-  | Login:
-  |
-  | {
-  |   "mobile": "9424860299",
-  |   "password": "Narendra@123"
-  | }
-  |
-  |--------------------------------------------------------------------------
-  */
   login: async (req, res, next) => {
     try {
       const { mobile, password } = req.body;
@@ -514,11 +438,6 @@ module.exports = {
     }
   },
 
-  /*
-  |--------------------------------------------------------------------------
-  | REFRESH TOKEN
-  |--------------------------------------------------------------------------
-  */
   refreshToken: async (req, res, next) => {
     try {
       const { refreshToken } = req.body;
@@ -565,11 +484,6 @@ module.exports = {
     }
   },
 
-  /*
-  |--------------------------------------------------------------------------
-  | PROFILE
-  |--------------------------------------------------------------------------
-  */
   profile: async (req, res, next) => {
     try {
       const user =
@@ -631,11 +545,6 @@ module.exports = {
     }
   },
 
-  /*
-  |--------------------------------------------------------------------------
-  | GET USER BY ID
-  |--------------------------------------------------------------------------
-  */
   getUser: async (req, res, next) => {
     try {
       const { id } = req.params;
@@ -696,11 +605,6 @@ module.exports = {
     }
   },
 
-  /*
-  |--------------------------------------------------------------------------
-  | GET ALL USERS
-  |--------------------------------------------------------------------------
-  */
   getAllUsers: async (req, res, next) => {
     try {
       const users =
@@ -793,11 +697,6 @@ module.exports = {
     }
   },
 
-  /*
-  |--------------------------------------------------------------------------
-  | GET FIRM BY ID
-  |--------------------------------------------------------------------------
-  */
   getFirm: async (req, res, next) => {
     try {
       const { id } = req.params;
@@ -856,11 +755,6 @@ module.exports = {
     }
   },
 
-  /*
-  |--------------------------------------------------------------------------
-  | GET ALL FIRMS
-  |--------------------------------------------------------------------------
-  */
   getAllFirms: async (req, res, next) => {
     try {
       const firms =
@@ -951,22 +845,6 @@ module.exports = {
     }
   },
 
-  /*
-  |--------------------------------------------------------------------------
-  | ADD FIRM TO USER
-  |--------------------------------------------------------------------------
-  |
-  | POST /users/:userId/firms
-  |
-  | Body:
-  |
-  | {
-  |   "firmName": "Another Firm",
-  |   "firmAddress": "Indore"
-  | }
-  |
-  |--------------------------------------------------------------------------
-  */
   addFirmToUser: async (
     req,
     res,
@@ -1058,15 +936,6 @@ module.exports = {
     }
   },
 
-  /*
-  |--------------------------------------------------------------------------
-  | REMOVE FIRM FROM USER
-  |--------------------------------------------------------------------------
-  |
-  | DELETE /users/:userId/firms/:firmId
-  |
-  |--------------------------------------------------------------------------
-  */
   removeFirmFromUser: async (
     req,
     res,
@@ -1145,11 +1014,6 @@ module.exports = {
     }
   },
 
-  /*
-  |--------------------------------------------------------------------------
-  | CHANGE PASSWORD
-  |--------------------------------------------------------------------------
-  */
   changePassword: async (
     req,
     res,
@@ -1206,39 +1070,6 @@ module.exports = {
     }
   },
 
-  /*
-  |--------------------------------------------------------------------------
-  | BULK UPLOAD
-  |--------------------------------------------------------------------------
-  |
-  | Excel columns:
-  |
-  | name
-  | email
-  | dob
-  | image
-  | bloodGroup
-  | mobile
-  | firmName
-  | firmAddress
-  |
-  |--------------------------------------------------------------------------
-  |
-  | IMPORTANT:
-  |
-  | If same user appears multiple times with different firms:
-  |
-  | Narendra | 9424860299 | Tarun Fabrics
-  | Narendra | 9424860299 | Another Firm
-  |
-  | Only ONE user is created.
-  |
-  | User.firm_ids becomes:
-  |
-  | [1, 2]
-  |
-  |--------------------------------------------------------------------------
-  */
   bulkUpload: async (
     req,
     res,
