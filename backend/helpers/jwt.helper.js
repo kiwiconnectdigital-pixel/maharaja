@@ -1,40 +1,122 @@
-const JWT = require("jsonwebtoken");
+const jwt = require("jsonwebtoken");
 const createError = require("http-errors");
 
-const signAccessToken = (userId) =>
-  new Promise((resolve, reject) => {
-    JWT.sign({ id: userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "1d" }, (err, token) => {
-      if (err) return reject(createError.InternalServerError());
-      resolve(token);
-    });
-  });
 
-const signRefreshToken = (userId) =>
-  new Promise((resolve, reject) => {
-    JWT.sign({ id: userId }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: process.env.REFRESH_TOKEN_EXPIRY || "7d" }, (err, token) => {
-      if (err) return reject(createError.InternalServerError());
-      resolve(token);
-    });
-  });
+// ============================================================
+// ACCESS TOKEN
+// ============================================================
 
-const verifyAccessToken = (req, res, next) => {
-  const authHeader = req.headers["authorization"];
-  if (!authHeader) return next(createError.Unauthorized("Access token required"));
-  const token = authHeader.split(" ")[1];
-  if (!token) return next(createError.Unauthorized("Access token required"));
-  JWT.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, payload) => {
-    if (err) return next(createError.Unauthorized(err.name === "JsonWebTokenError" ? "Unauthorized" : err.message));
-    req.userId = payload.id;
-    next();
+const signAccessToken = async (userId) => {
+  return new Promise((resolve, reject) => {
+    const payload = {
+      userId: userId,
+    };
+
+    jwt.sign(
+      payload,
+      process.env.ACCESS_TOKEN_SECRET,
+      {
+        expiresIn:
+          process.env.ACCESS_TOKEN_EXPIRY || "1d",
+      },
+      (err, token) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(token);
+        }
+      }
+    );
   });
 };
 
-const verifyRefreshToken = (refreshToken) =>
-  new Promise((resolve, reject) => {
-    JWT.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, payload) => {
-      if (err) return reject(createError.Unauthorized());
-      resolve(payload.id);
-    });
-  });
 
-module.exports = { signAccessToken, signRefreshToken, verifyAccessToken, verifyRefreshToken };
+// ============================================================
+// VERIFY ACCESS TOKEN
+// ============================================================
+
+const verifyAccessToken = async (token) => {
+  return new Promise((resolve, reject) => {
+    jwt.verify(
+      token,
+      process.env.ACCESS_TOKEN_SECRET,
+      (err, decoded) => {
+        if (err) {
+          return reject(
+            createError.Unauthorized(
+              "Invalid or expired access token"
+            )
+          );
+        }
+
+        resolve(decoded.userId);
+      }
+    );
+  });
+};
+
+
+// ============================================================
+// REFRESH TOKEN
+// ============================================================
+
+const signRefreshToken = async (userId) => {
+  return new Promise((resolve, reject) => {
+    const payload = {
+      userId: userId,
+    };
+
+    jwt.sign(
+      payload,
+      process.env.REFRESH_TOKEN_SECRET,
+      {
+        expiresIn:
+          process.env.REFRESH_TOKEN_EXPIRY || "7d",
+      },
+      (err, token) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(token);
+        }
+      }
+    );
+  });
+};
+
+
+// ============================================================
+// VERIFY REFRESH TOKEN
+// ============================================================
+
+const verifyRefreshToken = async (token) => {
+  return new Promise((resolve, reject) => {
+    jwt.verify(
+      token,
+      process.env.REFRESH_TOKEN_SECRET,
+      (err, decoded) => {
+        if (err) {
+          return reject(
+            createError.Unauthorized(
+              "Invalid or expired refresh token"
+            )
+          );
+        }
+
+        resolve(decoded.userId);
+      }
+    );
+  });
+};
+
+
+// ============================================================
+// EXPORT
+// ============================================================
+
+module.exports = {
+  signAccessToken,
+  verifyAccessToken,
+  signRefreshToken,
+  verifyRefreshToken,
+};

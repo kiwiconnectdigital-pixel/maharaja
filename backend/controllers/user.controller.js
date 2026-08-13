@@ -8,6 +8,7 @@ const {
   signAccessToken,
   signRefreshToken,
   verifyRefreshToken,
+  verifyAccessToken
 } = require("../helpers/jwt.helper");
 
 
@@ -485,65 +486,65 @@ module.exports = {
   },
 
   profile: async (req, res, next) => {
-    try {
-      const user =
-        await User.findByPk(
-          req.userId,
-          {
-            attributes: {
-              exclude: ["password"],
-            },
-          }
-        );
+  try {
+    const authHeader = req.headers.authorization;
 
-      if (!user) {
-        throw createError.NotFound(
-          "User not found"
-        );
-      }
-
-      /*
-      |--------------------------------------------------------------------------
-      | Get Firms
-      |--------------------------------------------------------------------------
-      */
-      const firmIds = normalizeIds(
-        user.firm_ids
+    if (!authHeader) {
+      throw createError.Unauthorized(
+        "Authorization token required"
       );
-
-      let firms = [];
-
-      if (firmIds.length > 0) {
-        firms = await Firm.findAll({
-          where: {
-            id: {
-              [Op.in]: firmIds,
-            },
-          },
-
-          attributes: [
-            "id",
-            "firmName",
-            "firmAddress",
-          ],
-        });
-      }
-
-      res.json({
-        success: true,
-
-        user: {
-          ...user.toJSON(),
-
-          firm_ids: firmIds,
-
-          firms,
-        },
-      });
-    } catch (err) {
-      next(err);
     }
-  },
+
+    const token = authHeader.startsWith("Bearer ")
+      ? authHeader.substring(7)
+      : authHeader;
+
+    const userId = await verifyAccessToken(token);
+
+    const user = await User.findByPk(userId, {
+      attributes: {
+        exclude: ["password"],
+      },
+    });
+
+    if (!user) {
+      throw createError.NotFound(
+        "User not found"
+      );
+    }
+
+    const firmIds = normalizeIds(user.firm_ids);
+
+    let firms = [];
+
+    if (firmIds.length > 0) {
+      firms = await Firm.findAll({
+        where: {
+          id: {
+            [Op.in]: firmIds,
+          },
+        },
+        attributes: [
+          "id",
+          "firmName",
+          "firmAddress",
+        ],
+      });
+    }
+
+    res.json({
+      success: true,
+      user: {
+        ...user.toJSON(),
+        firm_ids: firmIds,
+        firms,
+      },
+    });
+
+  } catch (err) {
+    next(err);
+  }
+},
 
   getUser: async (req, res, next) => {
   try {
