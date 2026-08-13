@@ -9,6 +9,7 @@ const { sequelize } = require("./models/index");
 // Route Imports
 const userRoutes = require("./routes/user.route");
 const productRoutes = require("./routes/product.route");
+const feedRoute = require("./routes/feed.route");
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.get("/", (req, res) => res.json({ success: true, msg: "Maharaja API is runni
 // Routes
 app.use("/api/users",userRoutes);
 app.use("/api/products",productRoutes);
+app.use("/api/feeds", feedRoute);
 
 // 404 handler
 app.use((req, res, next) => {

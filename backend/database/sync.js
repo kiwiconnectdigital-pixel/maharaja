@@ -1,57 +1,54 @@
 require("dotenv").config();
 
-const { sequelize, User } = require("../models/index");
+const {
+  sequelize,
+  User,
+} = require("../models/index");
+
 const {
   generateDefaultPassword,
 } = require("../helpers/password.helper");
 
 (async () => {
   try {
-    /*
-    |--------------------------------------------------------------------------
-    | Test MySQL Connection
-    |--------------------------------------------------------------------------
-    */
+    // ============================================================
+    // TEST DATABASE CONNECTION
+    // ============================================================
+
     await sequelize.authenticate();
 
     console.log("✅ MySQL connected");
 
-    /*
-    |--------------------------------------------------------------------------
-    | Sync Database
-    |--------------------------------------------------------------------------
-    |
-    | alter: true
-    | Keeps existing data and adjusts tables according to models.
-    |
-    | force: true
-    | DON'T use in production. It will DROP all tables.
-    |
-    |--------------------------------------------------------------------------
-    */
+
+    // ============================================================
+    // SYNC DATABASE
+    // ============================================================
+
     await sequelize.sync({
       alter: true,
     });
 
     console.log("✅ All tables synced");
 
-    /*
-    |--------------------------------------------------------------------------
-    | Check Existing Admin
-    |--------------------------------------------------------------------------
-    */
-    const adminCount = await User.count({
-      where: {
-        role: "admin",
-      },
-    });
 
-    /*
-    |--------------------------------------------------------------------------
-    | Create First Admin
-    |--------------------------------------------------------------------------
-    */
+    // ============================================================
+    // CHECK EXISTING ADMIN
+    // ============================================================
+
+    const adminCount =
+      await User.count({
+        where: {
+          role: "admin",
+        },
+      });
+
+
+    // ============================================================
+    // CREATE FIRST ADMIN
+    // ============================================================
+
     if (adminCount === 0) {
+
       const name =
         process.env.SEED_ADMIN_NAME ||
         "Super Admin";
@@ -64,81 +61,124 @@ const {
         process.env.SEED_ADMIN_MOBILE ||
         null;
 
-      /*
-      |--------------------------------------------------------------------------
-      | Generate Password
-      |--------------------------------------------------------------------------
-      |
-      | Super Admin -> Super@123
-      |
-      |--------------------------------------------------------------------------
-      */
+
+      // ==========================================================
+      // GENERATE DEFAULT PASSWORD
+      // ==========================================================
+      //
+      // Super Admin
+      //      ↓
+      // Super@123
+      //
+      // ==========================================================
+
       const password =
         generateDefaultPassword(name);
 
-      /*
-      |--------------------------------------------------------------------------
-      | Create Admin
-      |--------------------------------------------------------------------------
-      */
-      const admin = await User.create({
-        name,
 
-        email: email
-          ? email.toLowerCase()
-          : null,
+      // ==========================================================
+      // CREATE ADMIN
+      // ==========================================================
 
-        mobile,
+      const admin =
+        await User.create({
 
-        password,
+          name,
 
-        role: "admin",
+          email: email
+            ? email.toLowerCase()
+            : null,
 
-        firm_ids: [],
+          mobile,
 
-        is_password_reset_required: true,
+          password,
 
-        is_inactive: false,
-      });
+          role: "admin",
+
+          firm_ids: [],
+
+          is_password_reset_required: true,
+
+          is_inactive: false,
+
+        });
+
 
       console.log("");
       console.log(
         "=========================================="
       );
+
       console.log(
         "✅ First admin account created"
       );
-      console.log(
-        "=========================================="
-      );
-
-      console.log(`ID       : ${admin.id}`);
-      console.log(`Name     : ${admin.name}`);
-      console.log(`Email    : ${admin.email}`);
-      console.log(`Mobile   : ${admin.mobile}`);
-      console.log(`Password : ${password}`);
 
       console.log(
         "=========================================="
       );
+
+      console.log(
+        `ID       : ${admin.id}`
+      );
+
+      console.log(
+        `Name     : ${admin.name}`
+      );
+
+      console.log(
+        `Email    : ${admin.email || "N/A"}`
+      );
+
+      console.log(
+        `Mobile   : ${admin.mobile || "N/A"}`
+      );
+
+      console.log(
+        `Password : ${password}`
+      );
+
+      console.log(
+        "=========================================="
+      );
+
       console.log("");
+
     } else {
+
       console.log(
         "ℹ️ Admin account already exists, skipping seed."
       );
+
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Finish
-    |--------------------------------------------------------------------------
-    */
+
+    // ============================================================
+    // FINISH
+    // ============================================================
+
+    await sequelize.close();
+
     process.exit(0);
+
   } catch (err) {
+
+    console.error("");
     console.error(
-      "❌ Sync failed:",
-      err
+      "❌ Sync failed:"
     );
+
+    console.error(
+      err.message
+    );
+
+    if (err.parent) {
+      console.error(
+        "Database error:",
+        err.parent.message
+      );
+    }
+
+    console.error("");
 
     process.exit(1);
   }
