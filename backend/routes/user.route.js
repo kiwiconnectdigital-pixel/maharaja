@@ -34,18 +34,11 @@ router.get("/firms",userController.getAllFirms
 router.get("/:id",userController.getUser
 );
 
-router.get(
-  "/firm/:id",
-  userController.getFirm
+router.get("/firm/:id", userController.getFirm
 );
 
-router.post(
-  "/:userId/firms",
-  userController.addFirmToUser
-);
+router.post("/:userId/firms",userController.addFirmToUser);
 
-router.delete(
-  "/:userId/firms/:firmId",
-  userController.removeFirmFromUser
+router.delete("/:userId/firms/:firmId", userController.removeFirmFromUser
 );
 module.exports = router;
