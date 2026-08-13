@@ -29,9 +29,9 @@ User.init(
     },
 
     dob: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
-    },
+  type: DataTypes.DATEONLY,
+  allowNull: true,
+},
 
     image: {
       type: DataTypes.STRING(255),
