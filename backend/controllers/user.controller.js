@@ -2,7 +2,7 @@ const createError = require("http-errors");
 const { Op } = require("sequelize");
 const XLSX = require("xlsx");
 
-const { User, Firm } = require("../models/index");
+const { User, Firm, Product } = require("../models/index");
 
 const {
   signAccessToken,
@@ -546,64 +546,114 @@ module.exports = {
   },
 
   getUser: async (req, res, next) => {
-    try {
-      const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-      const user =
-        await User.findByPk(id, {
-          attributes: {
-            exclude: ["password"],
-          },
-        });
+    // ----------------------------------------------------------
+    // Pagination
+    // ----------------------------------------------------------
+    const page = Math.max(
+      parseInt(req.query.page) || 1,
+      1
+    );
 
-      if (!user) {
-        throw createError.NotFound(
-          "User not found"
-        );
-      }
+    const limit = Math.min(
+      Math.max(
+        parseInt(req.query.limit) || 10,
+        1
+      ),
+      100
+    );
 
-      /*
-      |--------------------------------------------------------------------------
-      | Get Firms
-      |--------------------------------------------------------------------------
-      */
-      const firmIds = normalizeIds(
-        user.firm_ids
+    const offset = (page - 1) * limit;
+
+    // ----------------------------------------------------------
+    // Get User
+    // ----------------------------------------------------------
+    const user = await User.findByPk(id, {
+      attributes: {
+        exclude: ["password"],
+      },
+    });
+
+    if (!user) {
+      throw createError.NotFound(
+        "User not found"
       );
-
-      let firms = [];
-
-      if (firmIds.length > 0) {
-        firms = await Firm.findAll({
-          where: {
-            id: {
-              [Op.in]: firmIds,
-            },
-          },
-
-          attributes: [
-            "id",
-            "firmName",
-            "firmAddress",
-          ],
-        });
-      }
-
-      res.json({
-        success: true,
-
-        user: {
-          ...user.toJSON(),
-
-          firm_ids: firmIds,
-
-          firms,
-        },
-      });
-    } catch (err) {
-      next(err);
     }
-  },
+
+    // ----------------------------------------------------------
+    // Get Firm IDs
+    // ----------------------------------------------------------
+    const firmIds = normalizeIds(
+      user.firm_ids
+    );
+
+    let firms = [];
+    let totalFirms = 0;
+
+    // ----------------------------------------------------------
+    // Get Firms with Pagination
+    // ----------------------------------------------------------
+    if (firmIds.length > 0) {
+      const result = await Firm.findAndCountAll({
+        where: {
+          id: {
+            [Op.in]: firmIds,
+          },
+        },
+
+        attributes: [
+          "id",
+          "firmName",
+          "firmAddress",
+        ],
+
+        order: [
+          ["id", "DESC"],
+        ],
+
+        limit,
+        offset,
+      });
+
+      firms = result.rows;
+      totalFirms = result.count;
+    }
+
+    // ----------------------------------------------------------
+    // Pagination Information
+    // ----------------------------------------------------------
+    const totalPages =
+      Math.ceil(totalFirms / limit);
+
+    res.json({
+      success: true,
+
+      user: {
+        ...user.toJSON(),
+
+        firm_ids: firmIds,
+
+        firms,
+      },
+
+      pagination: {
+        currentPage: page,
+        limit,
+        totalFirms,
+        totalPages,
+        hasNextPage:
+          page < totalPages,
+        hasPreviousPage:
+          page > 1,
+      },
+    });
+
+  } catch (err) {
+    next(err);
+  }
+},
 
   getAllUsers: async (req, res, next) => {
     try {
@@ -1419,4 +1469,185 @@ module.exports = {
       next(err);
     }
   },
+
+  search: async (req, res, next) => {
+  try {
+    const {
+      q = "",
+      firm_id,
+      page = 1,
+      limit = 10,
+    } = req.query;
+
+    const searchText = q.trim();
+
+    if (!searchText) {
+      throw createError.BadRequest(
+        "Search keyword is required"
+      );
+    }
+
+    const currentPage = Math.max(
+      parseInt(page) || 1,
+      1
+    );
+
+    const perPage = Math.min(
+      Math.max(
+        parseInt(limit) || 10,
+        1
+      ),
+      100
+    );
+
+    const offset =
+      (currentPage - 1) * perPage;
+
+
+    // ==========================================================
+    // SEARCH FIRMS
+    // ==========================================================
+
+    const firmWhere = {
+      [Op.or]: [
+        {
+          firmName: {
+            [Op.like]: `%${searchText}%`,
+          },
+        },
+        {
+          firmAddress: {
+            [Op.like]: `%${searchText}%`,
+          },
+        },
+      ],
+    };
+
+
+    // ==========================================================
+    // SEARCH PRODUCTS
+    // ==========================================================
+
+    const productWhere = {
+      [Op.or]: [
+        {
+          title: {
+            [Op.like]: `%${searchText}%`,
+          },
+        },
+        {
+          description: {
+            [Op.like]: `%${searchText}%`,
+          },
+        },
+        {
+          category: {
+            [Op.like]: `%${searchText}%`,
+          },
+        },
+      ],
+    };
+
+
+    // ==========================================================
+    // OPTIONAL FIRM FILTER FOR PRODUCTS
+    // ==========================================================
+
+    if (firm_id) {
+      productWhere.firm_id = firm_id;
+    }
+
+
+    // ==========================================================
+    // RUN BOTH SEARCHES
+    // ==========================================================
+
+    const [firmResult, productResult] =
+      await Promise.all([
+        Firm.findAndCountAll({
+          where: firmWhere,
+
+          attributes: [
+            "id",
+            "firmName",
+            "firmAddress",
+          ],
+
+          order: [
+            ["id", "DESC"],
+          ],
+
+          limit: perPage,
+          offset,
+        }),
+
+        Product.findAndCountAll({
+          where: productWhere,
+
+          order: [
+            ["id", "DESC"],
+          ],
+
+          limit: perPage,
+          offset,
+        }),
+      ]);
+
+
+    // ==========================================================
+    // RESPONSE
+    // ==========================================================
+
+    res.json({
+      success: true,
+
+      search: searchText,
+
+      firms: {
+        count: firmResult.count,
+
+        data: firmResult.rows,
+
+        pagination: {
+          currentPage,
+          limit: perPage,
+          totalPages: Math.ceil(
+            firmResult.count / perPage
+          ),
+          hasNextPage:
+            currentPage <
+            Math.ceil(
+              firmResult.count / perPage
+            ),
+          hasPreviousPage:
+            currentPage > 1,
+        },
+      },
+
+      products: {
+        count: productResult.count,
+
+        data: productResult.rows,
+
+        pagination: {
+          currentPage,
+          limit: perPage,
+          totalPages: Math.ceil(
+            productResult.count / perPage
+          ),
+          hasNextPage:
+            currentPage <
+            Math.ceil(
+              productResult.count / perPage
+            ),
+          hasPreviousPage:
+            currentPage > 1,
+        },
+      },
+    });
+
+  } catch (err) {
+    next(err);
+  }
+},
 };
