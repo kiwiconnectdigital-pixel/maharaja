@@ -5,6 +5,7 @@ const Firm = require("./firm.model");
 const Product = require("./product.model");
 const Feed = require("./feed.model");
 const FeedMedia = require("./feedMedia.model");
+const Category = require("./category.model");
 
 User.hasMany(Feed, {
   foreignKey: "uploaded_by",
@@ -32,6 +33,16 @@ FeedMedia.belongsTo(Feed, {
   as: "feed",
 });
 
+Category.hasMany(Firm, {
+  foreignKey: "category_id",
+  as: "firms",
+});
+
+Firm.belongsTo(Category, {
+  foreignKey: "category_id",
+  as: "category",
+});
+
 module.exports = {
   sequelize,
   User,
@@ -39,4 +50,5 @@ module.exports = {
   Product,
    Feed,
   FeedMedia,
+  Category
 };

@@ -1,9 +1,9 @@
 const { DataTypes, Model } = require("sequelize");
 const sequelize = require("../config/db");
 
-class Firm extends Model {}
+class Category extends Model {}
 
-Firm.init(
+Category.init(
   {
     id: {
       type: DataTypes.BIGINT,
@@ -11,34 +11,34 @@ Firm.init(
       autoIncrement: true,
     },
 
-    firmName: {
-      type: DataTypes.STRING,
+    name: {
+      type: DataTypes.STRING(150),
       allowNull: false,
+      unique: true,
     },
 
-    firmAddress: {
+    description: {
       type: DataTypes.TEXT,
       allowNull: true,
     },
 
-     category_id: {
-      type: DataTypes.BIGINT,
-      allowNull: true,
+    is_active: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
     },
 
-    user_ids: {
-      type: DataTypes.JSON,
+    created_by: {
+      type: DataTypes.INTEGER,
       allowNull: true,
-      defaultValue: [],
     },
   },
   {
     sequelize,
-    modelName: "Firm",
-    tableName: "firms",
+    modelName: "Category",
+    tableName: "categories",
     timestamps: true,
     underscored: true,
   }
 );
 
-module.exports = Firm;
+module.exports = Category;

@@ -11,7 +11,7 @@ const userRoutes = require("./routes/user.route");
 const productRoutes = require("./routes/product.route");
 const feedRoute = require("./routes/feed.route");
 const birthdayNotificationJob = require("./jobs/birthdayNotification.job");
-
+const categoryRoutes = require("./routes/category.routes");
 
 const app = express();
 
@@ -33,6 +33,7 @@ app.get("/", (req, res) => res.json({ success: true, msg: "Maharaja API is runni
 app.use("/api/users",userRoutes);
 app.use("/api/products",productRoutes);
 app.use("/api/feeds", feedRoute);
+app.use("/api/categories", categoryRoutes);
 
 birthdayNotificationJob();
 
