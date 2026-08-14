@@ -10,8 +10,10 @@ const { sequelize } = require("./models/index");
 const userRoutes = require("./routes/user.route");
 const productRoutes = require("./routes/product.route");
 const feedRoute = require("./routes/feed.route");
-const birthdayNotificationJob = require("./jobs/birthdayNotification.job");
+// const birthdayNotificationJob = require("./jobs/birthdayNotification.job");
 const categoryRoutes = require("./routes/category.routes");
+const reportRoutes = require("./routes/report.routes");
+
 
 const app = express();
 
@@ -34,8 +36,9 @@ app.use("/api/users",userRoutes);
 app.use("/api/products",productRoutes);
 app.use("/api/feeds", feedRoute);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/reports", reportRoutes);
 
-birthdayNotificationJob();
+// birthdayNotificationJob();
 
 // 404 handler
 app.use((req, res, next) => {

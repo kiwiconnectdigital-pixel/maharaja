@@ -807,94 +807,145 @@ module.exports = {
   },
 
   getAllFirms: async (req, res, next) => {
-    try {
-      const firms =
-        await Firm.findAll({
-          order: [
-            ["id", "DESC"],
-          ],
-        });
+  try {
+    /*
+    |--------------------------------------------------------------------------
+    | Pagination
+    |--------------------------------------------------------------------------
+    */
+    const page = Math.max(
+      parseInt(req.query.page) || 1,
+      1
+    );
 
-      /*
-      |--------------------------------------------------------------------------
-      | Get all user IDs
-      |--------------------------------------------------------------------------
-      */
-      const allUserIds = [];
+    const limit = Math.max(
+      parseInt(req.query.limit) || 10,
+      1
+    );
 
-      firms.forEach((firm) => {
-        const ids = normalizeIds(
-          firm.user_ids
-        );
+    const offset = (page - 1) * limit;
 
-        ids.forEach((id) => {
-          if (!allUserIds.includes(id)) {
-            allUserIds.push(id);
-          }
-        });
+    /*
+    |--------------------------------------------------------------------------
+    | Get Firms with Pagination
+    |--------------------------------------------------------------------------
+    */
+    const { rows: firms, count: totalFirms } =
+      await Firm.findAndCountAll({
+        order: [["id", "DESC"]],
+        limit,
+        offset,
       });
 
-      let users = [];
+    /*
+    |--------------------------------------------------------------------------
+    | Get all user IDs
+    |--------------------------------------------------------------------------
+    */
+    const allUserIds = [];
 
-      if (allUserIds.length > 0) {
-        users = await User.findAll({
-          where: {
-            id: {
-              [Op.in]: allUserIds,
-            },
-          },
+    firms.forEach((firm) => {
+      const ids = normalizeIds(firm.user_ids);
 
-          attributes: [
-            "id",
-            "name",
-            "email",
-            "mobile",
-            "role",
-          ],
-        });
-      }
-
-      const userMap = {};
-
-      users.forEach((user) => {
-        userMap[user.id] =
-          user.toJSON();
-      });
-
-      const finalFirms = firms.map(
-        (firm) => {
-          const json =
-            firm.toJSON();
-
-          const userIds =
-            normalizeIds(
-              json.user_ids
-            );
-
-          return {
-            ...json,
-
-            user_ids: userIds,
-
-            users: userIds
-              .map(
-                (id) =>
-                  userMap[id]
-              )
-              .filter(Boolean),
-          };
+      ids.forEach((id) => {
+        if (!allUserIds.includes(id)) {
+          allUserIds.push(id);
         }
+      });
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Get Users
+    |--------------------------------------------------------------------------
+    */
+    let users = [];
+
+    if (allUserIds.length > 0) {
+      users = await User.findAll({
+        where: {
+          id: {
+            [Op.in]: allUserIds,
+          },
+        },
+
+        attributes: [
+          "id",
+          "name",
+          "email",
+          "mobile",
+          "role",
+        ],
+      });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Create User Map
+    |--------------------------------------------------------------------------
+    */
+    const userMap = {};
+
+    users.forEach((user) => {
+      userMap[user.id] = user.toJSON();
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Prepare Final Firms
+    |--------------------------------------------------------------------------
+    */
+    const finalFirms = firms.map((firm) => {
+      const json = firm.toJSON();
+
+      const userIds = normalizeIds(
+        json.user_ids
       );
 
-      res.json({
-        success: true,
-        count: finalFirms.length,
-        firms: finalFirms,
-      });
-    } catch (err) {
-      next(err);
-    }
-  },
+      return {
+        ...json,
+
+        user_ids: userIds,
+
+        users: userIds
+          .map((id) => userMap[id])
+          .filter(Boolean),
+      };
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Pagination Information
+    |--------------------------------------------------------------------------
+    */
+    const totalPages = Math.ceil(
+      totalFirms / limit
+    );
+
+    return res.json({
+      success: true,
+
+      count: finalFirms.length,
+
+      pagination: {
+        current_page: page,
+        per_page: limit,
+        total_records: totalFirms,
+        total_pages: totalPages,
+
+        has_next_page:
+          page < totalPages,
+
+        has_previous_page:
+          page > 1,
+      },
+
+      firms: finalFirms,
+    });
+  } catch (err) {
+    next(err);
+  }
+},
 
   addFirmToUser: async (
     req,

@@ -4,36 +4,16 @@ const router = express.Router();
 
 const categoryController = require("../controllers/category.controller");
 
-const auth = require("../middleware/auth");
+// const auth = require("../middleware/auth");
 
-router.post(
-  "/",
-  auth,
-  categoryController.create
-);
+router.post("/", categoryController.create);
 
-router.get(
-  "/",
-  auth,
-  categoryController.getAll
-);
+router.get("/", categoryController.getAll);
 
-router.get(
-  "/:id",
-  auth,
-  categoryController.getById
-);
+router.get("/:id", categoryController.getById);
 
-router.put(
-  "/:id",
-  auth,
-  categoryController.update
-);
+router.put("/:id", categoryController.update);
 
-router.delete(
-  "/:id",
-  auth,
-  categoryController.delete
-);
+router.delete("/:id", categoryController.delete);
 
 module.exports = router;
