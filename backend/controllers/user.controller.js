@@ -610,6 +610,42 @@ module.exports = {
     }
   },
 
+  toggleUserStatus: async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findByPk(id);
+
+    if (!user) {
+      throw createError.NotFound("User not found");
+    }
+
+    // Toggle user status
+    user.is_inactive = !user.is_inactive;
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      msg: user.is_inactive
+        ? "User deactivated successfully"
+        : "User activated successfully",
+
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        mobile: user.mobile,
+        role: user.role,
+        is_inactive: user.is_inactive,
+        firm_ids: normalizeIds(user.firm_ids),
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+  },
+
   getFirm: async (req, res, next) => {
     try {
       const { id } = req.params;

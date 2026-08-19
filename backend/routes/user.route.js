@@ -35,6 +35,8 @@ router.put("/firm/:id", userController.updateFirm);
 
 router.patch("/firm/:id/toggle-status", userController.toggleFirmStatus);
 
+router.patch("/user/:id/toggle-status", userController.toggleUserStatus);
+
 router.post("/:userId/firms", userController.addFirmToUser);
 
 router.delete("/:userId/firms/:firmId", userController.removeFirmFromUser);
