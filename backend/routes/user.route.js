@@ -31,6 +31,8 @@ router.get("/firms", userController.getAllFirms);
 
 router.get("/firm/:id", userController.getFirm);
 
+router.put("/firm/:id", userController.updateFirm);
+
 router.post("/:userId/firms", userController.addFirmToUser);
 
 router.delete("/:userId/firms/:firmId", userController.removeFirmFromUser);
