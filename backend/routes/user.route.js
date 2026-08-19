@@ -21,17 +21,19 @@ router.post("/change-password", userController.changePassword);
 
 router.post("/bulk-upload", upload.single("file"), userController.bulkUpload);
 
+router.get("/firms", userController.getAllFirms);
+
 router.get("/search", userController.search);
 
 router.get("/", userController.getAllUsers);
 
 router.get("/:id", userController.getUser);
 
-router.get("/firms", userController.getAllFirms);
-
 router.get("/firm/:id", userController.getFirm);
 
 router.put("/firm/:id", userController.updateFirm);
+
+router.patch("/firm/:id/toggle-status", userController.toggleFirmStatus);
 
 router.post("/:userId/firms", userController.addFirmToUser);
 

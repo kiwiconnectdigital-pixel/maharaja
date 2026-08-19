@@ -21,7 +21,7 @@ Firm.init(
       allowNull: true,
     },
 
-     category_id: {
+    category_id: {
       type: DataTypes.BIGINT,
       allowNull: true,
     },
@@ -31,6 +31,11 @@ Firm.init(
       allowNull: true,
       defaultValue: [],
     },
+    status: {
+      type: DataTypes.ENUM("active", "inactive"),
+      allowNull: false,
+      defaultValue: "active",
+    },
   },
   {
     sequelize,
@@ -38,7 +43,7 @@ Firm.init(
     tableName: "firms",
     timestamps: true,
     underscored: true,
-  }
+  },
 );
 
 module.exports = Firm;

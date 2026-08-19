@@ -866,6 +866,41 @@ module.exports = {
   }
   },
 
+  toggleFirmStatus: async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const firm = await Firm.findByPk(id);
+
+    if (!firm) {
+      throw createError.NotFound("Firm not found");
+    }
+
+    // Toggle status
+    firm.status =
+      firm.status === "active"
+        ? "inactive"
+        : "active";
+
+    await firm.save();
+
+    res.status(200).json({
+      success: true,
+      msg: `Firm ${firm.status} successfully`,
+      firm: {
+        id: firm.id,
+        firmName: firm.firmName,
+        firmAddress: firm.firmAddress,
+        category_id: firm.category_id,
+        user_ids: normalizeIds(firm.user_ids),
+        status: firm.status,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+ },
+
   getAllFirms: async (req, res, next) => {
     try {
       /*
